@@ -19,7 +19,8 @@ RESET = "\033[0m"
 # System-Prompts (siehe unten)
 # -------------------------------
 SYSTEM_PROMPT_GENERATE_QUESTION = (
-    "Du bist ein Tutor und erstellst anhand des folgenden Benutzereingabe-Prompts eine neue, einzigartige Frage. "
+    "Du bist ein Tutor und erstellst anhand des folgenden Benutzereingabe-Prompts eine neue, einzigartige Frage."
+    "Die Fragen sollten zerlegt gestaltet werden, nicht alle Themen auf einmal."
     "Nutze den Inhalt des Prompts, um eine einzige interessante, lehrreiche Frage zu formulieren."
     "Bitte achte besonders darauf, dass du ausschließlich mit der Frage antwortest, nichts weiter."
     "Für mathe oder ähnliches nutze ausschließlich ascii schrift, kein TeX. sprich sqrt, ^2 _i etc. Gebe außerdem keine Hinweise"
