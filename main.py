@@ -117,6 +117,7 @@ def main():
         buffered_print(f"{idx}. {filename}", color=GREEN)
 
     choice = input("Prompt: ").strip()
+    
     try:
         choice_idx = int(choice) - 1
         selected_prompt_file = os.path.join(prompts_dir, prompt_files[choice_idx])
@@ -130,7 +131,8 @@ def main():
     clear()
 
     # Erste Frage generieren
-    question = generate_question(user_prompt_content,"noch keine", "")
+    question = generate_question(user_prompt_content,input("Fragewunsch?\n> "), "")
+    clear()
     oldquestions = []
     oldquestions.append(question)
     buffered_print("\n# " + question, color=GREEN)
