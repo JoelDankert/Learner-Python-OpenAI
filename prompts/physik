@@ -1,13 +1,23 @@
 Erstelle eine Liste von Übungsaufgaben zu den unten ernannten Themen
 
+Lorenzkraft allgemein: Wird als Grundstein der folgenden Themen gewertet, nicht abfragen
+F_L = B * I * l bzw. F_L = e * v * B
+
 Energieerhaltung: Mechanische Energie wird in elektrische Energie umgewandelt, bestätigt den Energieerhaltungssatz.
+Emech = F * ds = I * d * B * ds = Q/dt * d * B * ds
+Eel = Q * Uind = Q * B * d * v = Q * B * d * ds/dt
 
 Lenzsche Regel: Induzierte Spannung wirkt der Ursache entgegen.
+Uind = -n (Phi)dot
 
 Maxwell-Gleichungen: Beschreiben elektrische und magnetische Felder, inklusive Induktion und Wechselwirkungen.
+Nur ganz grob erklären was eine der Gleichungen bedeutet
 
 Induktionsspannung: Entsteht durch Bewegung im Magnetfeld oder Änderung des Magnetfelds.
+Uind = BIv bzw. Uind = -n (Phi)dot
 
 Verschiedene Szenarien: Spannung hängt von Bewegung, Richtung, Magnetfeldstärke und Spulenparametern ab.
+Uind = BIv bzw. Uind = -n (Phi)dot
 
-Der Nutzer hat die Themen zum ersten mal gelernt
+Der Großteil der Aufgaben soll feste Werte beinhalter oder mehrere Sachen umformen und kombinieren,
+Fokus hierbei ist das Anwenden, nicht die theoretische Abfrage.
