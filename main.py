@@ -3,8 +3,9 @@ import os
 import sys
 import openai
 import readline
+from sympy import sympify
 
-readline.parse_and_bind("tab: complete")
+#readline.parse_and_bind("tab: complete")
 #readline.parse_and_bind("set editing-mode vi")
 
 
@@ -143,10 +144,20 @@ def main():
         elif user_input.lower().startswith("next"):
             # Generiere eine neue Frage, lösche bisherigen Chatverlauf außer der neuen Fragestellung
             clear()
-            question = generate_question(user_prompt_content,"\n\n".join(oldquestions),user_input[5:])
+            question = generate_question(user_prompt_content,"\n\n".join(oldquestions),user_input[4:])
             oldquestions.append(question)
             buffered_print("\nFrage: " + question, color=GREEN)
             chat_history = f"Frage: {question}\n"
+        elif user_input.lower().startswith("calc"):
+            ask = user_input[4:]
+            try:
+                expr = sympify(ask, evaluate=True)
+                calc = round(float(expr.evalf()),3)
+            except:
+                calc = "Error"
+            chat_history += (f"calculation executed: {ask}={calc}\n")
+            buffered_print(f"CALC: {ask}={calc}", color=BLUE)
+            
         else:
             # Antwort prüfen
             chat_history += f"User: {user_input}\n"
