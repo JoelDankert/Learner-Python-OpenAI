@@ -130,8 +130,12 @@ def main():
 
     clear()
 
-    # Erste Frage generieren
-    question = generate_question(user_prompt_content,input("Fragewunsch?\n> "), "")
+    inp = input("fixq?\n\n")
+    if (inp != ""):
+        question = inp
+    else:
+        question = generate_question(user_prompt_content,input("Fragewunsch?\n> "), "")
+        
     clear()
     oldquestions = []
     oldquestions.append(question)
@@ -152,8 +156,8 @@ def main():
             oldquestions.append(question)
             buffered_print("\nFrage: " + question, color=GREEN)
             chat_history = f"Frage: {question}\n"
-        elif user_input.lower().startswith("calc"):
-            ask = user_input[4:]
+        elif user_input.lower().startswith("calc") or user_input.lower().endswith("calc") or user_input.lower().startswith("c") or user_input.lower().endswith("c") :
+            ask = user_input.replace("calc","").replace("c","").replace("=","́")
             try:
                 expr = sympify(ask, evaluate=True)
                 calc = round(float(expr.evalf()),3)
