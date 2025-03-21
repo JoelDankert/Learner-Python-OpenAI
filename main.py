@@ -45,6 +45,8 @@ SYSTEM_PROMPT_CHECK_ANSWER = (
 def clear():
     os.system("clear")
 
+clear()
+
 # -------------------------------
 # Helper: Buffered Print (zur späteren Erweiterung)
 # -------------------------------
@@ -114,7 +116,7 @@ def main():
     for idx, filename in enumerate(prompt_files, start=1):
         buffered_print(f"{idx}. {filename}", color=GREEN)
 
-    choice = input("Wähle eine Prompt (Zahl): ").strip()
+    choice = input("Prompt: ").strip()
     try:
         choice_idx = int(choice) - 1
         selected_prompt_file = os.path.join(prompts_dir, prompt_files[choice_idx])
