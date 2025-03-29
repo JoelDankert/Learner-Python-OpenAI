@@ -33,11 +33,11 @@ SYSTEM_PROMPT_GENERATE_QUESTION = (
 SYSTEM_PROMPT_CHECK_ANSWER = (
     "Du überprüfst nur den letzten Schritt die der nutzer gemacht hat auf die folgende Frage. "
     "Falls die Antwort bis dahin korrekt ist, antworte ausschließlich mit einer kurzen Bestätigung, ende den satz mit einem Punkt (.) am ende deiner nachricht"
-    "Falls der Nutzer in dem schritt einen Fehler gemacht hat, antworte ausschließlich mit einer kurzen Erklärung des Fehlers, gefolgt von einem Ausrufezeichen (!) als satzende"
+    "Falls der Nutzer in dem schritt einen Fehler gemacht hat, antworte ausschließlich mit einer kurzen Erklärung des Fehlers, gefolgt von einem Ausrufezeichen (!) als nachrichtende"
     "Falls der Nutzer eine Frage in seiner letzten nachricht stellt (Signal Fragezeichen), beantworte die Frage einfach. ende dann immer mit Punkt (.) bei jeder frage"
     "Für mathe oder ähnliches nutze ausschließlich ascii schrift, kein TeX. sprich sqrt, ^2 _i etc."
     "Antworte bitte als würdest du mit dem Nutzer sprechen."
-    "Nochmal: ende mit . wenn richtig und mit ! wenn falsch, bei fragen immer ."
+    "Nochmal: ende der nachricht mit . wenn richtig und mit ! wenn falsch, bei fragen immer ."
     "\n\nFrage:\n{question}\n\nChatverlauf:\n{chat_history}"
 )
 
@@ -156,15 +156,15 @@ def main():
             oldquestions.append(question)
             buffered_print("\nFrage: " + question, color=GREEN)
             chat_history = f"Frage: {question}\n"
-        elif user_input.lower().startswith("calc") or user_input.lower().endswith("calc") or user_input.lower().startswith("c") or user_input.lower().endswith("c") :
-            ask = user_input.replace("calc","").replace("c","").replace("=","́")
+        elif user_input.lower().endswith("calc") or user_input.lower().endswith("c") or user_input.lower().endswith("=") :
+            ask = user_input.lower().replace("calc","c")[:-1]
             try:
                 expr = sympify(ask, evaluate=True)
                 calc = round(float(expr.evalf()),3)
             except:
                 calc = "Error"
             chat_history += (f"calculation executed: {ask}={calc}\n")
-            buffered_print(f"CALC: {ask}={calc}", color=BLUE)
+            buffered_print(f"CALC: {ask.replace(" ","")}={calc}", color=BLUE)
             
         else:
             # Antwort prüfen
