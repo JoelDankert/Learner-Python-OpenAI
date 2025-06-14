@@ -37,7 +37,7 @@ for c in CATS:
 PROMPT = (
     "Schreibe jede Zeile des Schülers exakt neu ohne Korrektur, gleiche "
     "Zeilenumbrüche. Füge nach jedem fehlerhaften Wort oder Satz ein Tag ein: "
-    "wort[CAT|Begründung]. CAT ist der Fehlertyp als Kürzel, Begründung 1 Satz. "
+    "wort[Kategoriekürzel|Begründung]. Begründung circa 1 Satz erklären was genau falsch ist. "
     "Versuche alle Fehler zu markieren. "
     f"Verwende diese CATS: {', '.join(CATS)}. Keine zusätzlichen Zeilen. "
     "WICHTIG: NICHTS WEITER HINZUFÜGEN! NUR BEWERTEN!"
