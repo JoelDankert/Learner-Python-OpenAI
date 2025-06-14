@@ -107,9 +107,9 @@ def rate_paragraphs(txt: str):
     if not paras:
         return []
     prompt = (
-        "Bewerte die folgenden Absätze (Titel zählen als eigener Absatz). "
-        "Existiert nur ein Absatz, erstelle auch nur eine Bewertung.\n"
+        "Bewerte die folgenden Absätze (Titel zählen als eigener Absatz, Auch Bewerten). "
         "Gib für jeden Absatz eine kleine Rückmeldung. Achte nur auf Inhalt"
+        "Ist nichts anzumerken, einfach ein kurzes 'gut', nicht mehr"
         "NICHT auf Rechtschreibung oder Grammatik"
         "Keine Zusatzsätze – beginne sofort mit der bewertung des ersten absatzes..\n"
         "WICHTIG: NICHTS WEITER HINZUFÜGEN! NUR BEWERTEN!"
