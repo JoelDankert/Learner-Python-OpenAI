@@ -172,12 +172,13 @@ def get_para_bounds(lines):
 
 # ── Renderer ────────────────────────────────────────────────────────────
 def render(stdscr, graded: str, para_fb):
+    curses.curs_set(0)
     curses.start_color()
     curses.init_pair(1, curses.COLOR_RED,   0)                # Sterne + Tags
     curses.init_pair(2, curses.COLOR_GREEN, 0)                # Absatz-FB
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_RED) # selektierter *
 
-    WRAP_COLS = max(20, curses.COLS - 15)   # etwas Platz für Tags
+    WRAP_COLS = max(20, curses.COLS - 15)
 
     lines       = graded.splitlines()
     para_bounds = get_para_bounds(lines)
@@ -189,6 +190,8 @@ def render(stdscr, graded: str, para_fb):
             errors.append((i, cat, msg))
     sel, total = 0, len(errors)
 
+    show_fb = False  # ⬅ Standard: Keine Absatz-Tipps
+
     if curses.COLS < 30 or curses.LINES < 10:
         stdscr.addstr(0, 0, "Terminal zu klein.", curses.A_REVERSE)
         stdscr.refresh(); stdscr.getch(); return
@@ -199,7 +202,6 @@ def render(stdscr, graded: str, para_fb):
         stdscr.addstr(0, 0, header, curses.A_REVERSE)
 
         y, err_idx = 2, 0
-        # pro Zeile merken, wie viele Tags schon „verbraucht“ sind
         cat_ptr = {idx: 0 for idx in range(len(lines))}
 
         for li, raw in enumerate(lines):
@@ -222,28 +224,28 @@ def render(stdscr, graded: str, para_fb):
                     else:
                         stdscr.addstr(y, x, ch)
                     x += 1
-                # Tags am Ende der Wrap-Zeile
                 if cats_this_wrap:
                     stdscr.addstr(y, WRAP_COLS + 2, " ".join(cats_this_wrap), curses.color_pair(1))
                 y += 1
 
-            # Absatz-Feedback
-            for pidx, (s, e) in enumerate(para_bounds):
-                if li == e and pidx < len(para_fb):
-                    for seg in textwrap.wrap(para_fb[pidx], WRAP_COLS):
-                        if y >= curses.LINES: break
-                        stdscr.addstr(y, 0, seg, curses.color_pair(2)); y += 1
-                    y += 1
+            # ➤ Absatz-Feedback nur zeigen wenn aktiviert
+            if show_fb:
+                for pidx, (s, e) in enumerate(para_bounds):
+                    if li == e and pidx < len(para_fb):
+                        for seg in textwrap.wrap(para_fb[pidx], WRAP_COLS):
+                            if y >= curses.LINES: break
+                            stdscr.addstr(y, 0, seg, curses.color_pair(2)); y += 1
+                        y += 1
             if y >= curses.LINES: break
 
         stdscr.refresh()
         ch = stdscr.get_wch()
-        if ch == 'q': break                 # Enter
+        if ch == 'q': break
         if total:
             if ch == curses.KEY_RIGHT: sel = (sel + 1) % total
             elif ch == curses.KEY_LEFT:  sel = (sel - 1) % total
-
-
+        if ch == curses.KEY_DOWN:
+            show_fb = not show_fb  # ➤ Toggle der Anzeige
 
 # ── Main ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
