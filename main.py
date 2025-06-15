@@ -3,6 +3,7 @@ import locale
 import curses
 import sys
 import textwrap
+import os
 from pathlib import Path
 
 try:
@@ -108,8 +109,7 @@ def rate_paragraphs(txt: str):
         return []
     prompt = (
         "Bewerte die folgenden Absätze (Titel zählen als eigener Absatz, Auch Bewerten). "
-        "Gib für jeden Absatz eine kleine Rückmeldung. Achte nur auf Inhalt"
-        "Ist nichts anzumerken, einfach ein kurzes 'gut', nicht mehr"
+        "Gib für jeden Absatz eine kleine Rückmeldung, was man besser machen kann. Achte nur auf Inhalt"
         "NICHT auf Rechtschreibung oder Grammatik"
         "Keine Zusatzsätze – beginne sofort mit der bewertung des ersten absatzes..\n"
         "WICHTIG: NICHTS WEITER HINZUFÜGEN! NUR BEWERTEN!"
@@ -238,7 +238,7 @@ def render(stdscr, graded: str, para_fb):
 
         stdscr.refresh()
         ch = stdscr.get_wch()
-        if ch in (10, 13): break                 # Enter
+        if ch == 'q': break                 # Enter
         if total:
             if ch == curses.KEY_RIGHT: sel = (sel + 1) % total
             elif ch == curses.KEY_LEFT:  sel = (sel - 1) % total
@@ -262,3 +262,4 @@ if __name__ == "__main__":
     para_fb  = rate_paragraphs(original)
 
     curses.wrapper(render, graded, para_fb)
+    os.system(f"cat {path} | termux-clipboard-set")
