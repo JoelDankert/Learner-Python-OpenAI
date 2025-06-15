@@ -1,4 +1,3 @@
-
 import locale
 import curses
 import sys
@@ -240,7 +239,10 @@ def render(stdscr, graded: str, para_fb):
 
         stdscr.refresh()
         ch = stdscr.get_wch()
-        if ch == 'q': break
+        if ch == 'q':
+            os.system(f"cat {path} | termux-clipboard-set")
+            break
+        if ch == curses.KEY_DOWN: break
         if total:
             if ch == curses.KEY_RIGHT: sel = (sel + 1) % total
             elif ch == curses.KEY_LEFT:  sel = (sel - 1) % total
@@ -264,4 +266,4 @@ if __name__ == "__main__":
     para_fb  = rate_paragraphs(original)
 
     curses.wrapper(render, graded, para_fb)
-    os.system(f"cat {path} | termux-clipboard-set")
+
