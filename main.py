@@ -17,7 +17,11 @@ locale.setlocale(locale.LC_ALL, "")
 # ── Config ──────────────────────────────────────────────────────────────
 MODEL     = "gpt-4o"
 KEY_FILE  = Path(".openai_key")
-WRAP_FALL = 50
+
+ANSI_RED    = "\033[31m"
+ANSI_GREEN  = "\033[32m"
+ANSI_RESET  = "\033[0m"
+ANSI_BOLD   = "\033[1m"
 
 CATS = [
     "R (Rechtschreibung)", "Gr (Grammatik)", "Z (Zeichensetzung)",
@@ -43,11 +47,42 @@ PROMPT = (
     "WICHTIG: NICHTS WEITER HINZUFÜGEN! NUR BEWERTEN!"
 )
 
+def render_to_stdout(graded: str, wrap_cols: int = 80):
+    """
+    Gibt den korrigierten Text in der Konsole aus, mit * und Kürzeln wie im curses-Modus.
+    """
+    lines = graded.splitlines()
+
+    for li, raw in enumerate(lines):
+        txt, anns = parse_line(raw)
+        cats_only = [c for c, _ in anns]
+        wraps     = textwrap.wrap(txt, wrap_cols) or [""]
+
+        cat_ptr = 0
+        for seg in wraps:
+            line_out = ""
+            cat_tags = []
+            for ch in seg:
+                if ch == "*":
+                    if cat_ptr < len(cats_only):
+                        line_out += f"{ANSI_RED}*{ANSI_RESET}"
+                        cat_tags.append(cats_only[cat_ptr])
+                        cat_ptr += 1
+                    else:
+                        line_out += "*"
+                else:
+                    line_out += ch
+            padding = " " * (wrap_cols - len(seg))
+            tag_str = " ".join(cat_tags)
+            if tag_str:
+                tag_str = f"{ANSI_RED}{tag_str}{ANSI_RESET}"
+            print(f"{line_out}{padding}  {tag_str}")
+        print()  # Leerzeile zwischen Absätzen (optional)
+
 def clean_graded(text: str, original: str) -> str:
     """
     • entfernt LLM-Vorspann wie "R: …"
     • entfernt führende Zeilennummern
-    • stellt den ersten Absatz des Originals immer voran
     """
     lines = text.splitlines()
 
@@ -63,18 +98,7 @@ def clean_graded(text: str, original: str) -> str:
             ln = parts[1] if len(parts) > 1 else ""
         cleaned.append(ln.rstrip())
 
-    graded_body = "\n".join(cleaned)
-
-    # Ersten Absatz aus dem Original immer voranstellen
-    first_para = []
-    for ln in original.splitlines():
-        if ln.strip() == "":
-            break
-        first_para.append(ln.rstrip())
-    if first_para:
-        graded_body = "\n".join(first_para + ["", graded_body])
-
-    return graded_body
+    return "\n".join(cleaned)
 
 # ── OpenAI-Key ──────────────────────────────────────────────────────────
 def ensure_key():
@@ -297,13 +321,16 @@ if __name__ == "__main__":
 
     ensure_key()
     original = path.read_text(encoding="utf-8")
-    # Remove lines that start with '#' (after optional leading whitespace)
     original = '\n'.join(
         line for line in original.splitlines()
         if not line.lstrip().startswith('#')
     )
-    graded_raw  = grade_text(original)
-    graded      = clean_graded(graded_raw, original)
-    para_fb     = rate_paragraphs(original)
+    graded_raw = grade_text(original)
+    graded = clean_graded(graded_raw, original)
+    para_fb = rate_paragraphs(original)
 
-    curses.wrapper(render, graded, para_fb)
+    try:
+        curses.wrapper(render, graded, para_fb)
+    finally:
+      print("\n\nOUTPUT\n")
+      render_to_stdout(graded, wrap_cols=60)
