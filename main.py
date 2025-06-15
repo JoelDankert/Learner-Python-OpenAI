@@ -87,8 +87,6 @@ def ensure_key():
         KEY_FILE.write_text(openai.api_key)
 
 # ── OpenAI-Calls ────────────────────────────────────────────────────────
-
-
 def grade_text(txt: str) -> str:
     r = openai.ChatCompletion.create(
         model=MODEL,
@@ -100,14 +98,12 @@ def grade_text(txt: str) -> str:
     )
     return r.choices[0].message.content.strip()
 
-
-
 def rate_paragraphs(txt: str):
     paras = [p.strip() for p in txt.split("\n\n") if p.strip()]
     if not paras:
         return []
     prompt = (
-        "Bewerte die folgenden Absätze (Titel zählen als eigener Absatz, Auch Bewerten). "
+        "Bewerte die folgenden Absätze (alles wo eine leere zeile dazwischen ist). "
         "Gib für jeden Absatz eine kleine Rückmeldung, was man besser machen kann. Achte nur auf Inhalt"
         "NICHT auf Rechtschreibung oder Grammatik"
         "Keine Zusatzsätze – beginne sofort mit der bewertung des ersten absatzes..\n"
@@ -182,6 +178,7 @@ def render(stdscr, graded: str, para_fb):
     lines       = graded.splitlines()
     para_bounds = get_para_bounds(lines)
 
+    # Fehlerliste ermitteln
     errors = []
     for i, l in enumerate(lines):
         _, anns = parse_line(l)
@@ -189,7 +186,9 @@ def render(stdscr, graded: str, para_fb):
             errors.append((i, cat, msg))
     sel, total = 0, len(errors)
 
-    show_fb = False  # ⬅ Standard: Keine Absatz-Tipps
+    scroll   = 0      # ⬅ Neue Scroll-Position (Zeilen-Offset)
+    show_fb  = False  # ⬅ p toggelt Absatz-Feedback
+    max_scrl = 0      # ⬅ wird pro Frame berechnet
 
     if curses.COLS < 30 or curses.LINES < 10:
         stdscr.addstr(0, 0, "Terminal zu klein.", curses.A_REVERSE)
@@ -200,54 +199,91 @@ def render(stdscr, graded: str, para_fb):
         header = "Keine Fehler" if total == 0 else f"{errors[sel][1]}: {errors[sel][2]}"
         stdscr.addstr(0, 0, header, curses.A_REVERSE)
 
-        y, err_idx = 2, 0
-        cat_ptr = {idx: 0 for idx in range(len(lines))}
+        y          = 2         # Bildschirmzeile, auf der gezeichnet wird
+        line_no    = 0         # Logische Dokumentzeile (inkl. Wraps)
+        err_idx    = 0
+        cat_ptr    = {idx: 0 for idx in range(len(lines))}
 
+        # Gesamthöhe dynamisch berechnen, während wir zeichnen
         for li, raw in enumerate(lines):
             txt, anns = parse_line(raw)
             cats_only = [c for c, _ in anns]
-            wraps = textwrap.wrap(txt, WRAP_COLS) or [""]
-            for seg in wraps:
-                if y >= curses.LINES: break
-                x, cats_this_wrap = 0, []
-                for ch in seg:
-                    if ch == "*":
-                        cat = cats_only[cat_ptr[li]]
-                        cat_ptr[li] += 1
-                        cats_this_wrap.append(cat)
-                        style = curses.color_pair(1)
-                        if err_idx == sel:
-                            style |= curses.color_pair(3)
-                        stdscr.addstr(y, x, "*", style)
-                        err_idx += 1
-                    else:
-                        stdscr.addstr(y, x, ch)
-                    x += 1
-                if cats_this_wrap:
-                    stdscr.addstr(y, WRAP_COLS + 2, " ".join(cats_this_wrap), curses.color_pair(1))
-                y += 1
+            wraps     = textwrap.wrap(txt, WRAP_COLS) or [""]
 
-            # ➤ Absatz-Feedback nur zeigen wenn aktiviert
+            # ── Inhalt anzeigen ───────────────────────────────────────
+            for seg in wraps:
+                start_ptr = cat_ptr[li]             # ⬅ Merke Start-Index
+                # sichtbare Zeile?
+                if line_no >= scroll and y < curses.LINES:
+                    x = 0
+                    for ch in seg:
+                        if ch == "*":
+                            cat = cats_only[cat_ptr[li]]
+                            cat_ptr[li] += 1
+                            style = curses.color_pair(1)
+                            if err_idx == sel:
+                                style |= curses.color_pair(3)
+                            stdscr.addstr(y, x, "*", style)
+                            err_idx += 1
+                        else:
+                            stdscr.addstr(y, x, ch)
+                        x += 1
+                    # Zeilen-Tags (nur NEUE dieses Wraps) an den Rand schreiben
+                    cats_this_wrap = cats_only[start_ptr:cat_ptr[li]]
+                    if cats_this_wrap:
+                        stdscr.addstr(
+                            y, WRAP_COLS + 2,
+                            " ".join(cats_this_wrap),
+                            curses.color_pair(1)
+                        )
+                    y += 1
+                else:
+                    # nichts zeichnen, Fehlerindex trotzdem hochzählen
+                    for ch in seg:
+                        if ch == "*":
+                            cat_ptr[li] += 1
+                            err_idx += 1
+                line_no += 1  # Eine Wrap-Zeile gezählt
+
+            # ── Absatzfeedback ────────────────────────────────────────
             if show_fb:
                 for pidx, (s, e) in enumerate(para_bounds):
                     if li == e and pidx < len(para_fb):
                         for seg in textwrap.wrap(para_fb[pidx], WRAP_COLS):
-                            if y >= curses.LINES: break
-                            stdscr.addstr(y, 0, seg, curses.color_pair(2)); y += 1
-                        y += 1
-            if y >= curses.LINES: break
+                            if line_no >= scroll and y < curses.LINES:
+                                stdscr.addstr(y, 0, seg, curses.color_pair(2))
+                                y += 1
+                            line_no += 1
+                        line_no += 1  # Leerzeile nach Feedback
+                        if line_no >= scroll and y < curses.LINES:
+                            y += 1
+
+        # Maximal mögliche Scroll-Position neu setzen
+        max_scrl = max(0, line_no - (curses.LINES - 2))
 
         stdscr.refresh()
         ch = stdscr.get_wch()
-        if ch == 'q':
+
+        # ── Tastatur-Handling ────────────────────────────────────────
+        if ch == 'q':          # normales Beenden
+            break
+        if ch == 'c':          # Beenden & Inhalt in Zwischenablage
             os.system(f"cat {path} | termux-clipboard-set")
             break
-        if ch == curses.KEY_UP: break
+
         if total:
-            if ch == curses.KEY_RIGHT: sel = (sel + 1) % total
-            elif ch == curses.KEY_LEFT:  sel = (sel - 1) % total
-        if ch == curses.KEY_DOWN:
-            show_fb = not show_fb  # ➤ Toggle der Anzeige
+            if ch == curses.KEY_RIGHT:
+                sel = (sel + 1) % total
+            elif ch == curses.KEY_LEFT:
+                sel = (sel - 1) % total
+
+        if ch == curses.KEY_UP:                         # Scroll ↑
+            scroll = max(0, scroll - 1)
+        elif ch == curses.KEY_DOWN:                     # Scroll ↓
+            scroll = min(max_scrl, scroll + 1)
+        elif ch == 'p':                                 # Toggle Absatz-Feedback
+            show_fb = not show_fb
+
 
 # ── Main ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
@@ -260,10 +296,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     ensure_key()
-    original = path.read_text(encoding="utf-8")
-    graded_raw = grade_text(original)
-    graded     = clean_graded(graded_raw, original)
-    para_fb  = rate_paragraphs(original)
+    original    = path.read_text(encoding="utf-8")
+    graded_raw  = grade_text(original)
+    graded      = clean_graded(graded_raw, original)
+    para_fb     = rate_paragraphs(original)
 
     curses.wrapper(render, graded, para_fb)
-
