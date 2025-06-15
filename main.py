@@ -92,7 +92,7 @@ def ensure_key():
 def grade_text(txt: str) -> str:
     r = openai.ChatCompletion.create(
         model=MODEL,
-        temperature=0.2,
+        temperature=0.3,
         messages=[
             {"role": "system", "content": "You are a strict but kind tutor."},
             {"role": "user",   "content": PROMPT + "\n\n" + txt}
@@ -117,9 +117,9 @@ def rate_paragraphs(txt: str):
         prompt += f"{i}. {p}\n\n"
     r = openai.ChatCompletion.create(
         model=MODEL,
-        temperature=0.2,
+        temperature=0.3,
         messages=[
-            {"role": "system", "content": "You are a strict but kind tutor."},
+            {"role": "system", "content": "Du bist ein genauer Lehrer, der versucht den Schülertext zu verbessern"},
             {"role": "user",   "content": prompt}
         ],
     )
@@ -242,7 +242,7 @@ def render(stdscr, graded: str, para_fb):
         if ch == 'q':
             os.system(f"cat {path} | termux-clipboard-set")
             break
-        if ch == curses.KEY_DOWN: break
+        if ch == curses.KEY_UP: break
         if total:
             if ch == curses.KEY_RIGHT: sel = (sel + 1) % total
             elif ch == curses.KEY_LEFT:  sel = (sel - 1) % total
