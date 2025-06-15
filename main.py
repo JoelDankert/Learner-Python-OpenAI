@@ -296,7 +296,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     ensure_key()
-    original    = path.read_text(encoding="utf-8")
+    original = path.read_text(encoding="utf-8")
+    # Remove lines that start with '#' (after optional leading whitespace)
+    original = '\n'.join(
+        line for line in original.splitlines()
+        if not line.lstrip().startswith('#')
+    )
     graded_raw  = grade_text(original)
     graded      = clean_graded(graded_raw, original)
     para_fb     = rate_paragraphs(original)
